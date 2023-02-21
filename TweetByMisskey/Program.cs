@@ -42,7 +42,7 @@ namespace TweetByMisskey
             if (webhookEvent.EventType != "note") return new OkResult();
 
             var noteObject = JsonSerializer.Deserialize<WebhookPayloadNoteObject>(requestBody).Body.Note;
-            if (string.IsNullOrEmpty(noteObject.RenoteId) || string.IsNullOrEmpty(noteObject.ReplyId)) return new OkResult();
+            if (!string.IsNullOrEmpty(noteObject.RenoteId) || !string.IsNullOrEmpty(noteObject.ReplyId)) return new OkResult();
 
             Tweet(noteObject.Text);
             return new OkResult();
