@@ -36,12 +36,15 @@ namespace TweetByMisskey
             if (misskeyHookSecret != WebhookSecret) return new UnauthorizedResult();
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            log.LogInformation(requestBody);
+
             var webhookEvent = JsonSerializer.Deserialize<WebhookPayload>(requestBody);
             if (webhookEvent.EventType != "note") return new OkResult();
 
-            var noteObject = JsonSerializer.Deserialize<WebhookPayloadNoteObject>(requestBody);
-            Tweet(noteObject.Body.Text);
+            var noteObject = JsonSerializer.Deserialize<WebhookPayloadNoteObject>(requestBody).Body.Note;
+            if (string.IsNullOrEmpty(noteObject.RenoteId) || string.IsNullOrEmpty(noteObject.ReplyId)) return new OkResult();
 
+            Tweet(noteObject.Text);
             return new OkResult();
         }
 

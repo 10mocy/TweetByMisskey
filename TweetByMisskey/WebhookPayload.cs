@@ -20,7 +20,7 @@ namespace TweetByMisskey
         public string EventId { get; set; }
 
         [JsonPropertyName("createdAt")]
-        public int CreatedAt { get; set; }
+        public long CreatedAt { get; set; }
 
         [JsonPropertyName("type")]
         public string EventType { get; set; }
@@ -32,7 +32,13 @@ namespace TweetByMisskey
     public class WebhookPayloadNoteObject
     {
         [JsonPropertyName("body")]
-        public NoteObject Body { get; set; }
+        public BodyObject Body { get; set; }
+    }
+
+    public class BodyObject
+    {
+        [JsonPropertyName("note")]
+        public NoteObject Note { get; set; }
     }
 
     public class NoteObject
@@ -54,5 +60,11 @@ namespace TweetByMisskey
 
         [JsonPropertyName("visibility")]
         public string Visibility { get; set; }
+
+        [JsonPropertyName("replyId")]
+        public string ReplyId { get; set; }
+
+        [JsonPropertyName("renoteId")]
+        public string RenoteId { get; set; }
     }
 }
