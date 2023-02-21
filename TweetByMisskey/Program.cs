@@ -6,30 +6,48 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using CoreTweet;
+using System.Text.Json;
 
 namespace TweetByMisskey
 {
-    public static class Program
+    public class Program
     {
-        [FunctionName("Function1")]
-        public static async Task<IActionResult> Run(
+        private string WebhookSecret { get; }
+        private Tokens Tokens { get; }
+
+        public Program()
+        {
+            WebhookSecret = Environment.GetEnvironmentVariable("MisskeyWebhookSecret");
+            Tokens = Tokens.Create(
+                Environment.GetEnvironmentVariable("TwitterConsumerKey"),
+                Environment.GetEnvironmentVariable("TwitterConsumerKeySecret"),
+                Environment.GetEnvironmentVariable("TwitterAccessToken"),
+                Environment.GetEnvironmentVariable("TwitterAccessTokenSecret")
+            );
+        }
+
+        [FunctionName(nameof(Webhook))]
+        public async Task<IActionResult> Webhook(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-
-            string name = req.Query["name"];
+            var misskeyHookSecret = req.Headers["X-Misskey-Hook-Secret"];
+            if (misskeyHookSecret != WebhookSecret) return new UnauthorizedResult();
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            var webhookEvent = JsonSerializer.Deserialize<WebhookPayload>(requestBody);
+            if (webhookEvent.EventType != "note") return new OkResult();
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            var noteObject = JsonSerializer.Deserialize<WebhookPayloadNoteObject>(requestBody);
+            Tweet(noteObject.Body.Text);
 
-            return new OkObjectResult(responseMessage);
+            return new OkResult();
+        }
+
+        private void Tweet(string text)
+        {
+            Tokens.Statuses.Update(text);
         }
     }
 }
