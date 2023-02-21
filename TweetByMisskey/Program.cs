@@ -50,7 +50,7 @@ namespace TweetByMisskey
 
         private void Tweet(string text)
         {
-            Tokens.Statuses.Update(text);
+            Tokens.Statuses.Update($"{text} w/ Mi");
         }
     }
 }
